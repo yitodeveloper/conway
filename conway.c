@@ -2,21 +2,32 @@
 #include <stdlib.h>
 #include <unistd.h>
 
-#define ANCHO 10
-#define ALTO 10
 
 int** crearGrilla(int ancho, int alto);
 void imprimirGrilla(int generacion, int** grilla, int ancho, int alto);
 int** nuevaGeneracion(int** grilla, int ancho, int alto);
+void obtenerPatronesIniciales(int **grilla, int ancho, int alto);
 
 int main() {
-    
+    int ANCHO, ALTO, configurarPatronInicial ;
+
+    printf("Ingrese el ancho de la cuadrícula: ");
+    scanf("%d", &ANCHO);
+    printf("Ingrese el alto de la cuadrícula: ");
+    scanf("%d", &ALTO);
+    printf("¿Desea configurar patron inicial? (1.si/2.no) ");
+    scanf("%d", &configurarPatronInicial);
+
     int** grilla = crearGrilla(ANCHO, ALTO);
-    grilla[1][2] = 1;
-    grilla[2][3] = 1;
-    grilla[3][1] = 1;
-    grilla[3][2] = 1;
-    grilla[3][3] = 1;
+    if(configurarPatronInicial == 1){
+        obtenerPatronesIniciales(grilla, ANCHO, ALTO);
+    }else{
+        grilla[1][2] = 1;
+        grilla[2][3] = 1;
+        grilla[3][1] = 1;
+        grilla[3][2] = 1;
+        grilla[3][3] = 1;
+    }
 
     int generacion = 0;
 
@@ -35,6 +46,24 @@ int main() {
         usleep(500000); // Espera de 500 milisegundos
     }
     return 0;
+}
+
+// Función para obtener las coordenadas de las células vivas iniciales
+void obtenerPatronesIniciales(int **grilla, int ancho, int alto) {
+    printf("Ingrese las coordenadas de las células vivas iniciales.\n");
+    printf("Formato: fila columna (Ejemplo: 1 2).\n");
+    printf("Ingrese '0 0' para finalizar.\n");
+
+    int fila, columna;
+    do {
+        printf("Coordenadas (fila columna): ");
+        scanf("%d %d", &fila, &columna);
+        if (fila >= 1 && fila <= alto && columna >= 1 && columna <= ancho) {
+            grilla[fila - 1][columna - 1] = 1; // Convertir a índices base 0
+        } else if (fila != 0 || columna != 0) {
+            printf("Coordenadas fuera de rango. Inténtelo de nuevo.\n");
+        }
+    } while (fila != 0 || columna != 0);
 }
 
 int** crearGrilla(int ancho, int alto) {
