@@ -3,25 +3,43 @@
 #include <unistd.h>
 
 
-int** crearGrilla(int ancho, int alto);
-void imprimirGrilla(int generacion, int** grilla, int ancho, int alto);
-int** nuevaGeneracion(int** grilla, int ancho, int alto);
-void obtenerPatronesIniciales(int **grilla, int ancho, int alto);
-
 int main() {
-    int ANCHO, ALTO, configurarPatronInicial ;
+    int ancho, alto, configurarPatronInicial ;
 
-    printf("Ingrese el ancho de la cuadrícula: ");
-    scanf("%d", &ANCHO);
-    printf("Ingrese el alto de la cuadrícula: ");
-    scanf("%d", &ALTO);
+    printf("Ingrese el ancho de la cuadricula: ");
+    scanf("%d", &ancho);
+    printf("Ingrese el alto de la cuadricula: ");
+    scanf("%d", &alto);
     printf("¿Desea configurar patron inicial? (1.si/2.no) ");
     scanf("%d", &configurarPatronInicial);
+  
+    int grilla[ancho][alto];
 
-    int** grilla = crearGrilla(ANCHO, ALTO);
+    for(int i = 0; i < alto; i++){
+        for(int j = 0; j < ancho; j++){
+            grilla[i][j] = 0;
+        }
+    }
+
+
     if(configurarPatronInicial == 1){
-        obtenerPatronesIniciales(grilla, ANCHO, ALTO);
+        // Configurar el patron inicial
+        printf("Ingrese las coordenadas de las celulas vivas iniciales.\n");
+        printf("Formato: fila columna (Ejemplo: 1 2).\n");
+        printf("Ingrese '0 0' para finalizar.\n");
+
+        int fila, columna;
+        do {
+            printf("Coordenadas (fila columna): ");
+            scanf("%d %d", &fila, &columna);
+            if (fila >= 1 && fila <= ancho && columna >= 1 && columna <= alto) {
+                grilla[fila - 1][columna - 1] = 1;
+            } else if (fila != 0 || columna != 0) {
+                printf("Coordenadas fuera de rango. Inténtelo de nuevo.\n");
+            }
+        } while (fila != 0 || columna != 0);
     }else{
+        // Patron por defecto
         grilla[1][2] = 1;
         grilla[2][3] = 1;
         grilla[3][1] = 1;
@@ -30,101 +48,82 @@ int main() {
     }
 
     int generacion = 0;
-
+    printf("\n\n");
     while (1) {
-        imprimirGrilla(generacion, grilla, ANCHO, ALTO);
-        int** nuevaGrilla = nuevaGeneracion(grilla, ANCHO, ALTO);
-        
-        // Liberar la memoria de la grilla anterior
-        for (int i = 0; i < ALTO; i++) {
-            free(grilla[i]);
+
+        printf("Generacion nº: %d\n", generacion);
+        // Imprime Grilla en la consola
+        for (int i = 0; i < alto; i++) {
+            for (int j = 0; j < ancho; j++) {
+                int imprimirCelula = grilla[i][j];
+                if (imprimirCelula == 1){
+                    printf("O");
+                }else{
+                    printf(".");
+                }
+            }
+            printf("\n");
         }
-        free(grilla);
-        
-        grilla = nuevaGrilla;
+
+        printf("\n\n");
+        // Crear nueva generacion
+        int nuevaGrilla[ancho][alto];
+
+        for(int i = 0; i < alto; i++){
+            for(int j = 0; j < ancho; j++){
+                nuevaGrilla[i][j] = 0;
+            }
+        }
+
+        // Revisar celdas actuales
+        for (int i = 0; i < alto; i++) {
+            for (int j = 0; j < ancho; j++) {
+                int vecinosVivos = 0;
+
+                // Explorando alrededor de la célula seleccionada para encontrar las vivas
+                for (int x = -1; x <= 1; x++) {
+                    for (int y = -1; y <= 1; y++) {
+                        if (x == 0 && y == 0) continue;
+                        int columnaInspeccion = i + x; // Columna a revisar
+                        int filaInspeccion = j + y; // Fila a revisar
+
+                        // Reglas de negocio
+                        if (columnaInspeccion >= 0 && columnaInspeccion < alto && filaInspeccion >= 0 && filaInspeccion < ancho) {
+                            vecinosVivos = vecinosVivos + grilla[columnaInspeccion][filaInspeccion];
+                        }
+                    }
+                }
+
+                int estaViva = grilla[i][j] == 1;
+
+                if (estaViva) {
+                    // Regla 1: Para que una célula siga viva, tener 2 o 3 vecinas
+                    if (vecinosVivos < 2 || vecinosVivos > 3) {
+                        nuevaGrilla[i][j] = 0; // Muere
+                    } else {
+                        nuevaGrilla[i][j] = 1;
+                    }
+                } else {
+                    // Regla 2: Si una célula está muerta y tiene 3 vecinas vivas, revive
+                    if (vecinosVivos == 3) {
+                        nuevaGrilla[i][j] = 1;
+                    } else {
+                        nuevaGrilla[i][j] = 0; // Muere
+                    }
+                }
+            }
+        }
+
+
+        // Modificar grilla con valores nuevos
+        for (int i = 0; i < alto; i++) {
+            for (int j = 0; j < ancho; j++) {
+                grilla[i][j] = nuevaGrilla[i][j];
+            }
+        }
+    
         generacion++;
         usleep(500000); // Espera de 500 milisegundos
     }
     return 0;
-}
-
-// Función para obtener las coordenadas de las células vivas iniciales
-void obtenerPatronesIniciales(int **grilla, int ancho, int alto) {
-    printf("Ingrese las coordenadas de las células vivas iniciales.\n");
-    printf("Formato: fila columna (Ejemplo: 1 2).\n");
-    printf("Ingrese '0 0' para finalizar.\n");
-
-    int fila, columna;
-    do {
-        printf("Coordenadas (fila columna): ");
-        scanf("%d %d", &fila, &columna);
-        if (fila >= 1 && fila <= alto && columna >= 1 && columna <= ancho) {
-            grilla[fila - 1][columna - 1] = 1; // Convertir a índices base 0
-        } else if (fila != 0 || columna != 0) {
-            printf("Coordenadas fuera de rango. Inténtelo de nuevo.\n");
-        }
-    } while (fila != 0 || columna != 0);
-}
-
-int** crearGrilla(int ancho, int alto) {
-    int** grilla = (int**)malloc(alto * sizeof(int*));
-    for (int i = 0; i < alto; i++) {
-        grilla[i] = (int*)calloc(ancho, sizeof(int));
-    }
-    return grilla;
-}
-
-void imprimirGrilla(int generacion, int** grilla, int ancho, int alto) {
-    printf("\033[H\033[J"); // Limpiar pantalla
-    printf("Generación nº: %d\n", generacion);
-    for (int i = 0; i < alto; i++) {
-        for (int j = 0; j < ancho; j++) {
-            printf("%c ", grilla[i][j] == 1 ? 'O' : '.');
-        }
-        printf("\n");
-    }
-}
-
-int **nuevaGeneracion(int **grilla, int ancho, int alto) {
-    int **nuevaGrilla = crearGrilla(ancho, alto);
-
-    for (int i = 0; i < alto; i++) {
-        for (int j = 0; j < ancho; j++) {
-            int vecinosVivos = 0;
-
-            // Explorando alrededor de la célula seleccionada para encontrar las vivas
-            for (int x = -1; x <= 1; x++) {
-                for (int y = -1; y <= 1; y++) {
-                    if (x == 0 && y == 0) continue;
-                    int ni = i + x; // Columna a revisar
-                    int nj = j + y; // Fila a revisar
-
-                    // Reglas de negocio
-                    if (ni >= 0 && ni < alto && nj >= 0 && nj < ancho) {
-                        vecinosVivos += grilla[ni][nj];
-                    }
-                }
-            }
-
-            int estaViva = grilla[i][j] == 1;
-
-            if (estaViva) {
-                // Regla 1: Para que una célula siga viva, tener 2 o 3 vecinas
-                if (vecinosVivos < 2 || vecinosVivos > 3) {
-                    nuevaGrilla[i][j] = 0; // Muere
-                } else {
-                    nuevaGrilla[i][j] = 1;
-                }
-            } else {
-                // Regla 2: Si una célula está muerta y tiene 3 vecinas vivas, revive
-                if (vecinosVivos == 3) {
-                    nuevaGrilla[i][j] = 1;
-                } else {
-                    nuevaGrilla[i][j] = 0; // Muere
-                }
-            }
-        }
-    }
-
-    return nuevaGrilla;
 }
