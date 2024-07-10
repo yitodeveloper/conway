@@ -1,0 +1,7 @@
+temperaturas[0]: 5.000000 
+temperaturas[1]: 5.000000 
+temperaturas[2]: 5.000000 
+
+La temperatura promedio de julio fue: 5.000000
+Temperatura minima: 5.000000
+Temperatura maxima: 5.000000
